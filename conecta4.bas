@@ -36,7 +36,9 @@ CONST NRO_COLUMNAS = 7
 CONST WINDOW_X = NRO_COLUMNAS * TILE_X
 CONST WINDOW_Y = (NRO_FILAS * TILE_Y) + TILE_Y
 
-CONST FPS = 60
+CONST VEL_CAER_FICHA = 2
+
+CONST FPS = 100
 
 '===========================================================================
 '---                       Variables  O B J E T O S
@@ -71,6 +73,8 @@ DIM SHARED gameover AS _BIT
 DIM salir AS _BIT
 
 DIM SHARED score AS INTEGER ' 0= ganador-jugador, 1= ganador-IA, 2= empate
+DIM SHARED columna AS INTEGER
+DIM SHARED ficha_cayendo AS _BIT
 
 DIM a AS INTEGER
 DIM b AS INTEGER
@@ -113,6 +117,9 @@ turno = -1
 cambio_turno = 0
 game_over = 0
 salir = 0
+
+score = 0 '          0= enJuego, 1= ganador-jugador, 2= ganador-IA, 3= empate
+ficha_cayendo = 0
 
 cadencia = 0
 ciclos = 0
@@ -181,6 +188,7 @@ DO
 
         '------------- LLAMADAS A SUBS ---------------
         dibuja_board
+        tirar_ficha
         mostrar_marcadores
 
         '--------- TECLAS ESC Y POS_XY RATON ---------
@@ -192,8 +200,8 @@ DO
             raton.y = _MOUSEY
         WEND
 
-        IF _MOUSEBUTTON(1) OR _MOUSEBUTTON(2) THEN
-            'PAINT (raton.x, raton.y), rojo, azul_cel
+        IF (_MOUSEBUTTON(1) OR _MOUSEBUTTON(2)) AND NOT ficha_cayendo THEN
+            ini_tirar_ficha raton
         END IF
 
         '------------- CONTADORES --------------------
@@ -289,6 +297,58 @@ SUB dibuja_board
 END SUB
 
 '=======================================================================
+SUB ini_tirar_ficha (raton AS raton)
+
+    SHARED board() AS board
+    SHARED ficha AS ficha
+
+    '-------------- SI COLUMNA LLENA... RETURN ----------------
+    columna = INT(raton.x / TILE_X) + 1
+
+    IF board(columna, 1).valor <> 0 THEN EXIT SUB
+
+    '-------------- SI SE PUEDE, INICIA TIRADA ----------------
+    ficha_cayendo = -1
+    ficha.x = (columna - 1) * TILE_X
+    ficha.y = 1 * TILE_Y
+
+    LOCATE 3, 60: PRINT columna; " - "; board(columna, 1).valor
+
+END SUB
+
+'=======================================================================
+SUB tirar_ficha
+
+    SHARED ficha AS ficha
+    SHARED board() AS board
+
+    IF NOT ficha_cayendo THEN EXIT SUB
+
+    '---------------- TIRAR FICHA SI PROCEDE -------------
+    ficha.x = (columna - 1) * TILE_X
+    ficha.y = ficha.y + VEL_CAER_FICHA
+
+    CIRCLE (ficha.x + (TILE_X / 2), ficha.y + (TILE_Y / 2)), TILE_Y / 2.5, rojo
+    PAINT (ficha.x + (TILE_X / 2), ficha.y + (TILE_Y / 2)), rojo, rojo
+
+    '------- CHECK FICHA DEBAJO O CHECK LIMITE BAJO ------
+    IF INT(ficha.y / TILE_Y) + 1 < NRO_FILAS + 1 THEN
+
+        IF board(columna, INT(ficha.y / TILE_Y) + 1).valor <> 0 THEN
+            ficha_cayendo = 0
+            board(columna, INT(ficha.y / TILE_Y)).valor = 1
+        END IF
+    END IF
+
+    '-----------------------------------------------------
+    IF ficha.y >= NRO_FILAS * TILE_Y THEN
+        ficha_cayendo = 0
+        board(columna, INT(ficha.y / TILE_Y)).valor = 1
+    END IF
+
+END SUB
+
+'=======================================================================
 SUB mostrar_marcadores
 
     COLOR amarillo_ui
@@ -347,6 +407,15 @@ SUB instanciar_board (board() AS board)
     NEXT y
 
 END SUB
+
+'===================================================================
+SUB instanciar_ficha (ficha AS ficha)
+
+    ficha.x = 0
+    ficha.y = 0
+
+END SUB
+
 
 
 
