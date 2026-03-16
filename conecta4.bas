@@ -77,11 +77,13 @@ DIM b AS INTEGER
 DIM cadencia AS INTEGER
 DIM ciclos AS INTEGER
 
-'DIM musica_ingame AS LONG
-'DIM musica_intro AS LONG
-'DIM sonido_num_key AS LONG
-'DIM sonido_key AS LONG
-'DIM sonido_gameover AS LONG
+DIM musica_ingame AS LONG
+DIM sonido_chipscollide1 AS LONG
+DIM sonido_chipscollide2 AS LONG
+DIM sonido_chipscollide3 AS LONG
+DIM sonido_diethrow1 AS LONG
+DIM sonido_diethrow2 AS LONG
+DIM sonido_aplausoseagle AS LONG
 
 '===============================================================
 '--------                                               --------
@@ -100,6 +102,9 @@ LINE (0, 0)-(WINDOW_X, WINDOW_Y), negro_vacio, BF
 
 _TITLE " CONECTA 4 "
 
+LOCATE 18, 38
+PRINT " Cargando... "
+
 '===============================================================
 '--------               UPDATES GENERALES               --------
 '---------------------------------------------------------------
@@ -117,15 +122,19 @@ instanciar_board board()
 '===============================================================
 '--------               UPDATES SONIDOS                 --------
 '---------------------------------------------------------------
-
+musica_ingame = _SNDOPEN("music-puzzle-game1.mp3")
+sonido_aplausoseagle = _SNDOPEN("aplausoseagle.mp3")
+sonido_chipscollide1 = _SNDOPEN("chipsCollide1.ogg")
+sonido_chipscollide2 = _SNDOPEN("chipsCollide2.ogg")
+sonido_chipscollide3 = _SNDOPEN("chipsCollide3.ogg")
+sonido_diethrow1 = _SNDOPEN("dieThrow1.ogg")
+sonido_diethrow2 = _SNDOPEN("dieThrow2.ogg")
 
 '============================================================
 '--------                                            --------
 '--------        B U C L E   P R E J U E G O         --------
 '--------                                            --------
 '============================================================
-'_SNDPLAY musica_intro
-
 DO
     _LIMIT FPS
     PCOPY _DISPLAY, 1
@@ -153,6 +162,8 @@ LOOP UNTIL _KEYDOWN(13) OR _KEYDOWN(32)
 
 pre_juego = 0
 soniquete 250, 750
+
+_SNDPLAY musica_ingame
 
 '============================================================
 '---                    CAMBIO TURNO                      ---
