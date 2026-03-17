@@ -84,6 +84,10 @@ DIM b AS INTEGER
 DIM cadencia AS INTEGER
 DIM ciclos AS INTEGER
 
+DIM tablero_tile AS LONG
+DIM ficha_roja AS LONG
+DIM ficha_verde AS LONG
+
 DIM musica_ingame AS LONG
 DIM sonido_chipscollide1 AS LONG
 DIM sonido_chipscollide2 AS LONG
@@ -131,6 +135,14 @@ ciclos = 0
 instanciar_board board()
 
 '===============================================================
+'--------               UPDATES GRAFICOS                 --------
+'--------                                               --------
+'---------------------------------------------------------------
+tablero_tile = _LOADIMAGE("tablero-tile-c4.png")
+ficha_roja = _LOADIMAGE("ficha-roja-c4.png")
+ficha_verde = _LOADIMAGE("ficha-roja-c4.png")
+
+'===============================================================
 '--------               UPDATES SONIDOS                 --------
 '--------                                               --------
 '---------------------------------------------------------------
@@ -147,6 +159,9 @@ sonido_diethrow2 = _SNDOPEN("dieThrow2.ogg")
 '--------        B U C L E   P R E J U E G O         --------
 '--------                                            --------
 '============================================================
+CLS
+LINE (0, 0)-(WINDOW_X, WINDOW_Y), negro_vacio, BF
+
 DO
     _LIMIT FPS
     PCOPY _DISPLAY, 1
@@ -192,8 +207,8 @@ DO
         PCOPY _DISPLAY, 1
 
         '------------- LLAMADAS A SUBS ---------------
-        dibuja_board
         tirar_ficha
+        dibuja_board
         mostrar_marcadores
 
         '----- TECLAS ESC, M  Y  CLICK-RATON (TIRAR FICHA) -----
@@ -270,6 +285,9 @@ SUB dibuja_board
     DIM fondo_grid_y AS INTEGER
 
     SHARED board() AS board
+    SHARED tablero_tile AS LONG
+    SHARED ficha_roja AS LONG
+    SHARED ficha_verde AS LONG
 
     FOR y = 1 TO NRO_FILAS
         FOR x = 1 TO NRO_COLUMNAS
@@ -279,23 +297,16 @@ SUB dibuja_board
 
             IF board(x, y).valor = 1 THEN
 
-                LINE (fondo_grid_x, fondo_grid_y)-(fondo_grid_x + TILE_X, fondo_grid_y + TILE_Y), azul_cel, BF
-                CIRCLE (fondo_grid_x + (TILE_X / 2), fondo_grid_y + (TILE_Y / 2)), TILE_Y / 2.5, rojo
-                PAINT (fondo_grid_x + (TILE_X / 2), fondo_grid_y + (TILE_Y / 2)), rojo, rojo
+                _PUTIMAGE (fondo_grid_x, fondo_grid_y), ficha_roja
 
             ELSEIF board(x, y).valor = 2 THEN
 
-                LINE (fondo_grid_x, fondo_grid_y)-(fondo_grid_x + TILE_X, fondo_grid_y + TILE_Y), azul_cel, BF
-                CIRCLE (fondo_grid_x + (TILE_X / 2), fondo_grid_y + (TILE_Y / 2)), TILE_Y / 2.5, amarillo_2
-                PAINT (fondo_grid_x + (TILE_X / 2), fondo_grid_y + (TILE_Y / 2)), amarillo_2, amarillo_2
-
-            ELSE
-
-                LINE (fondo_grid_x, fondo_grid_y)-(fondo_grid_x + TILE_X, fondo_grid_y + TILE_Y), azul_cel, BF
-                CIRCLE (fondo_grid_x + (TILE_X / 2), fondo_grid_y + (TILE_Y / 2)), TILE_Y / 2.5, negro_vacio
-                PAINT (fondo_grid_x + (TILE_X / 2), fondo_grid_y + (TILE_Y / 2)), negro_vacio, negro_vacio
+                _PUTIMAGE (fondo_grid_x, fondo_grid_y), ficha_roja
 
             END IF
+
+            '------- DIBUJA SIEMPRE LA PORCION DEL TABLERO -------
+            _PUTIMAGE (fondo_grid_x, fondo_grid_y), tablero_tile
 
         NEXT x
     NEXT y
@@ -327,6 +338,12 @@ SUB tirar_ficha
 
     SHARED ficha AS ficha
     SHARED board() AS board
+    SHARED ficha_roja AS LONG
+    SHARED ficha_verde AS LONG
+
+    SHARED sonido_chipscollide1 AS LONG
+    SHARED sonido_chipscollide2 AS LONG
+    SHARED sonido_chipscollide3 AS LONG
 
     '---------- SI NOT FICHA_CAYENDO... RETURN -----------
     IF NOT ficha_cayendo THEN EXIT SUB
@@ -335,22 +352,29 @@ SUB tirar_ficha
     ficha.x = (columna - 1) * TILE_X
     ficha.y = ficha.y + VEL_CAER_FICHA
 
-    CIRCLE (ficha.x + (TILE_X / 2), ficha.y + (TILE_Y / 2)), TILE_Y / 2.5, rojo
-    PAINT (ficha.x + (TILE_X / 2), ficha.y + (TILE_Y / 2)), rojo, rojo
+    _PUTIMAGE (ficha.x, ficha.y), ficha_roja
 
     '---------------- CHECK FICHA DEBAJO -----------------
     IF INT(ficha.y / TILE_Y) + 1 < NRO_FILAS + 1 THEN
 
         IF board(columna, INT(ficha.y / TILE_Y) + 1).valor <> 0 THEN
+
             ficha_cayendo = 0
             board(columna, INT(ficha.y / TILE_Y)).valor = 1
+            _SNDPLAY sonido_chipscollide1
+            _SNDPLAY sonido_chipscollide2
+
         END IF
     END IF
 
     '-----------------  CHECK LIMITE BAJO ----------------
     IF ficha.y >= NRO_FILAS * TILE_Y THEN
+
         ficha_cayendo = 0
         board(columna, INT(ficha.y / TILE_Y)).valor = 1
+        _SNDPLAY sonido_chipscollide1
+        _SNDPLAY sonido_chipscollide3
+
     END IF
 
 END SUB
