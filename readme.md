@@ -6,6 +6,7 @@ Juego en Basic QB64 <strong>Conecta 4</strong>
 <i>de QB64 el archivo conecta4.bas y ejecutarlo o bien<i>
 <i>opción make-EXE-file (en ambas se creará un .exe)<i>
 
+<img src="img/img-conecta-cuatro.png"/>
 <img src="img/img-conecta4.png"/>
 
 

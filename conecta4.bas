@@ -140,7 +140,7 @@ instanciar_board board()
 '---------------------------------------------------------------
 tablero_tile = _LOADIMAGE("tablero-tile-c4.png")
 ficha_roja = _LOADIMAGE("ficha-roja-c4.png")
-ficha_verde = _LOADIMAGE("ficha-roja-c4.png")
+ficha_verde = _LOADIMAGE("ficha-verde-c4.png")
 
 '===============================================================
 '--------               UPDATES SONIDOS                 --------
@@ -301,7 +301,7 @@ SUB dibuja_board
 
             ELSEIF board(x, y).valor = 2 THEN
 
-                _PUTIMAGE (fondo_grid_x, fondo_grid_y), ficha_roja
+                _PUTIMAGE (fondo_grid_x, fondo_grid_y), ficha_verde
 
             END IF
 
@@ -341,9 +341,6 @@ SUB tirar_ficha
     SHARED ficha_roja AS LONG
     SHARED ficha_verde AS LONG
 
-    SHARED sonido_chipscollide1 AS LONG
-    SHARED sonido_chipscollide2 AS LONG
-    SHARED sonido_chipscollide3 AS LONG
 
     '---------- SI NOT FICHA_CAYENDO... RETURN -----------
     IF NOT ficha_cayendo THEN EXIT SUB
@@ -352,30 +349,47 @@ SUB tirar_ficha
     ficha.x = (columna - 1) * TILE_X
     ficha.y = ficha.y + VEL_CAER_FICHA
 
-    _PUTIMAGE (ficha.x, ficha.y), ficha_roja
+    IF turno THEN
+        _PUTIMAGE (ficha.x, ficha.y), ficha_roja
+
+    ELSEIF NOT turno THEN
+
+        _PUTIMAGE (ficha.x, ficha.y), ficha_verde
+    END IF
 
     '---------------- CHECK FICHA DEBAJO -----------------
     IF INT(ficha.y / TILE_Y) + 1 < NRO_FILAS + 1 THEN
 
         IF board(columna, INT(ficha.y / TILE_Y) + 1).valor <> 0 THEN
-
-            ficha_cayendo = 0
-            board(columna, INT(ficha.y / TILE_Y)).valor = 1
-            _SNDPLAY sonido_chipscollide1
-            _SNDPLAY sonido_chipscollide2
-
+            cambiar_turno board(), ficha
         END IF
+
     END IF
 
     '-----------------  CHECK LIMITE BAJO ----------------
-    IF ficha.y >= NRO_FILAS * TILE_Y THEN
+    IF ficha.y >= NRO_FILAS * TILE_Y THEN cambiar_turno board(), ficha
 
-        ficha_cayendo = 0
+END SUB
+
+'=======================================================================
+SUB cambiar_turno (board() AS board, ficha AS ficha)
+
+    SHARED sonido_chipscollide1 AS LONG
+    SHARED sonido_chipscollide2 AS LONG
+    SHARED sonido_chipscollide3 AS LONG
+
+    ficha_cayendo = 0
+
+    IF turno THEN
         board(columna, INT(ficha.y / TILE_Y)).valor = 1
-        _SNDPLAY sonido_chipscollide1
-        _SNDPLAY sonido_chipscollide3
-
+        turno = 0
+    ELSE
+        board(columna, INT(ficha.y / TILE_Y)).valor = 2
+        turno = -1
     END IF
+
+    _SNDPLAY sonido_chipscollide1
+    _SNDPLAY sonido_chipscollide2
 
 END SUB
 
