@@ -6,6 +6,7 @@
 '---                                                                     ---
 '===========================================================================
 '---                       C O N S T A N T E S                           ---
+'---                                                                     ---
 '---------------------------------------------------------------------------
 CONST blanco = _RGB32(245, 245, 245)
 CONST gris_fondo_ui = _RGB32(99, 99, 99)
@@ -42,6 +43,7 @@ CONST FPS = 100
 
 '===========================================================================
 '---                       Variables  O B J E T O S
+'---
 '---------------------------------------------------------------------------
 TYPE board
     x AS INTEGER
@@ -61,6 +63,7 @@ END TYPE
 
 '-----------------------------------------------------------------------
 '---      A S I G N A R   E S P A C I O   E N   M E M O R I A        ---
+'---                                                                 ---
 '-----------------------------------------------------------------------
 DIM ficha AS ficha
 DIM board(NRO_COLUMNAS, NRO_FILAS) AS board
@@ -104,13 +107,14 @@ RANDOMIZE TIMER
 CLS
 LINE (0, 0)-(WINDOW_X, WINDOW_Y), negro_vacio, BF
 
-_TITLE " CONECTA 4 "
+_TITLE " CONECTA 4  by Juan Eguia "
 
 LOCATE 18, 38
 PRINT " Cargando... "
 
 '===============================================================
 '--------               UPDATES GENERALES               --------
+'--------                                               --------
 '---------------------------------------------------------------
 pre_juego = -1
 turno = -1
@@ -128,6 +132,7 @@ instanciar_board board()
 
 '===============================================================
 '--------               UPDATES SONIDOS                 --------
+'--------                                               --------
 '---------------------------------------------------------------
 musica_ingame = _SNDOPEN("music-puzzle-game1.mp3")
 sonido_aplausoseagle = _SNDOPEN("aplausoseagle.mp3")
@@ -150,9 +155,8 @@ DO
     dibuja_board
     mostrar_marcadores
 
-    '--------- TECLAS ESC Y POS_XY RATON ---------
+    '---------------------------------------------
     IF _KEYDOWN(27) THEN SYSTEM
-    IF _KEYDOWN(77) OR _KEYDOWN(109) THEN _SNDSTOP musica_intro
 
     COLOR amarillo
     LOCATE 3, 30
@@ -167,6 +171,7 @@ DO
 
 LOOP UNTIL _KEYDOWN(13) OR _KEYDOWN(32)
 
+'============================================================
 pre_juego = 0
 soniquete 250, 750
 
@@ -191,7 +196,7 @@ DO
         tirar_ficha
         mostrar_marcadores
 
-        '--------- TECLAS ESC Y POS_XY RATON ---------
+        '----- TECLAS ESC, M  Y  CLICK-RATON (TIRAR FICHA) -----
         IF _KEYDOWN(27) THEN salir = -1
         IF _KEYDOWN(77) OR _KEYDOWN(109) THEN _SNDSTOP musica_ingame
 
@@ -221,6 +226,7 @@ LOOP UNTIL salir OR gameover
 '--------      B U C L E   G A M E  O V E R          --------
 '--------                                            --------
 '============================================================
+_SNDSTOP musica_ingame
 
 DO
     _LIMIT FPS
@@ -312,7 +318,7 @@ SUB ini_tirar_ficha (raton AS raton)
     ficha.x = (columna - 1) * TILE_X
     ficha.y = 1 * TILE_Y
 
-    LOCATE 3, 60: PRINT columna; " - "; board(columna, 1).valor
+    'LOCATE 3, 60: PRINT columna; " - "; board(columna, 1).valor
 
 END SUB
 
@@ -322,6 +328,7 @@ SUB tirar_ficha
     SHARED ficha AS ficha
     SHARED board() AS board
 
+    '---------- SI NOT FICHA_CAYENDO... RETURN -----------
     IF NOT ficha_cayendo THEN EXIT SUB
 
     '---------------- TIRAR FICHA SI PROCEDE -------------
@@ -331,7 +338,7 @@ SUB tirar_ficha
     CIRCLE (ficha.x + (TILE_X / 2), ficha.y + (TILE_Y / 2)), TILE_Y / 2.5, rojo
     PAINT (ficha.x + (TILE_X / 2), ficha.y + (TILE_Y / 2)), rojo, rojo
 
-    '------- CHECK FICHA DEBAJO O CHECK LIMITE BAJO ------
+    '---------------- CHECK FICHA DEBAJO -----------------
     IF INT(ficha.y / TILE_Y) + 1 < NRO_FILAS + 1 THEN
 
         IF board(columna, INT(ficha.y / TILE_Y) + 1).valor <> 0 THEN
@@ -340,7 +347,7 @@ SUB tirar_ficha
         END IF
     END IF
 
-    '-----------------------------------------------------
+    '-----------------  CHECK LIMITE BAJO ----------------
     IF ficha.y >= NRO_FILAS * TILE_Y THEN
         ficha_cayendo = 0
         board(columna, INT(ficha.y / TILE_Y)).valor = 1
@@ -351,9 +358,9 @@ END SUB
 '=======================================================================
 SUB mostrar_marcadores
 
-    COLOR amarillo_ui
-    LOCATE 6, 1
-    PRINT raton.x; " - "; raton.y
+    'COLOR amarillo_ui
+    'LOCATE 6, 1
+    'PRINT raton.x; " - "; raton.y
 
     COLOR amarillo
     LOCATE 1, 1
@@ -364,7 +371,7 @@ SUB mostrar_marcadores
 
     IF pre_juego THEN EXIT SUB
 
-    '-----------------------------------------
+    '--------------------------------------------------
     COLOR amarillo
     LOCATE 1, 38
     PRINT " Toggle Music: ";
@@ -398,6 +405,7 @@ SUB instanciar_board (board() AS board)
     DIM y AS INTEGER
     DIM x AS INTEGER
 
+    '-- ASIGNAR VALOR=0 (SIN FICHA por defecto) A LAS 42 CASILLAS --
     FOR y = 1 TO NRO_FILAS
         FOR x = 1 TO NRO_COLUMNAS
 
@@ -410,10 +418,8 @@ END SUB
 
 '===================================================================
 SUB instanciar_ficha (ficha AS ficha)
-
     ficha.x = 0
     ficha.y = 0
-
 END SUB
 
 
