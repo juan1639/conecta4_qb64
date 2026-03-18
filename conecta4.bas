@@ -71,7 +71,6 @@ DIM SHARED raton AS raton
 
 DIM SHARED pre_juego AS _BIT
 DIM SHARED turno AS _BIT
-DIM SHARED cambio_turno AS _BIT
 DIM SHARED gameover AS _BIT
 DIM salir AS _BIT
 
@@ -122,7 +121,6 @@ PRINT " Cargando... "
 '---------------------------------------------------------------
 pre_juego = -1
 turno = -1
-cambio_turno = 0
 game_over = 0
 salir = 0
 
@@ -193,49 +191,42 @@ soniquete 250, 750
 _SNDPLAY musica_ingame
 
 '============================================================
-'---                    CAMBIO TURNO                      ---
-'---                                                      ---
-'------------------------------------------------------------
+'--------                                            --------
+'--------      B U C L E   P R I N C I P A L         --------
+'--------                                            --------
+'============================================================
 DO
-    '============================================================
-    '--------                                            --------
-    '--------      B U C L E   P R I N C I P A L         --------
-    '--------                                            --------
-    '============================================================
-    DO
-        _LIMIT FPS
-        PCOPY _DISPLAY, 1
+    _LIMIT FPS
+    PCOPY _DISPLAY, 1
 
-        '------------- LLAMADAS A SUBS ---------------
-        tirar_ficha
-        dibuja_board
-        mostrar_marcadores
+    '------------- LLAMADAS A SUBS ---------------
+    tirar_ficha
+    dibuja_board
+    mostrar_marcadores
 
-        '----- TECLAS ESC, M  Y  CLICK-RATON (TIRAR FICHA) -----
-        IF _KEYDOWN(27) THEN salir = -1
-        IF _KEYDOWN(77) OR _KEYDOWN(109) THEN _SNDSTOP musica_ingame
+    '----- TECLAS ESC, M  Y  CLICK-RATON (TIRAR FICHA) -----
+    IF _KEYDOWN(27) THEN salir = -1
+    IF _KEYDOWN(77) OR _KEYDOWN(109) THEN _SNDSTOP musica_ingame
 
-        WHILE _MOUSEINPUT
-            raton.x = _MOUSEX
-            raton.y = _MOUSEY
-        WEND
+    WHILE _MOUSEINPUT
+        raton.x = _MOUSEX
+        raton.y = _MOUSEY
+    WEND
 
-        IF (_MOUSEBUTTON(1) OR _MOUSEBUTTON(2)) AND NOT ficha_cayendo THEN
-            ini_tirar_ficha raton
-        END IF
+    IF (_MOUSEBUTTON(1) OR _MOUSEBUTTON(2)) AND NOT ficha_cayendo THEN
+        ini_tirar_ficha raton
+    END IF
 
-        '------------- CONTADORES --------------------
-        ciclos = ciclos + 1
+    '------------- CONTADORES --------------------
+    ciclos = ciclos + 1
 
-        IF ciclos >= 32000 THEN ciclos = 0
-        IF cadencia > 0 THEN cadencia = cadencia - 1
+    IF ciclos >= 32000 THEN ciclos = 0
+    IF cadencia > 0 THEN cadencia = cadencia - 1
 
-        _DISPLAY
-        PCOPY 1, _DISPLAY
+    _DISPLAY
+    PCOPY 1, _DISPLAY
 
-    LOOP UNTIL gameover OR salir OR cambio_turno
-
-LOOP UNTIL salir OR gameover
+LOOP UNTIL gameover OR salir
 
 '============================================================
 '--------      B U C L E   G A M E  O V E R          --------
@@ -247,7 +238,7 @@ DO
     _LIMIT FPS
     PCOPY _DISPLAY, 1
 
-    IF _KEYDOWN(29) THEN salir = -1 'ESC. Salir
+    IF _KEYDOWN(27) THEN salir = -1 'ESC. Salir
 
     '------------- LLAMADAS A SUBS ---------------
     dibuja_board
@@ -390,6 +381,70 @@ SUB cambiar_turno (board() AS board, ficha AS ficha)
 
     _SNDPLAY sonido_chipscollide1
     _SNDPLAY sonido_chipscollide2
+
+    check_4raya
+
+END SUB
+
+'=======================================================================
+SUB check_4raya
+
+    DIM y AS INTEGER
+    DIM x AS INTEGER
+    DIM loop_4 AS INTEGER
+    DIM contador AS INTEGER
+
+    SHARED board() AS board
+
+    '------------------------------------------------------------------
+    '---                   CHECK HORIZONTALES
+    '------------------------------------------------------------------
+    FOR y = 1 TO NRO_FILAS
+        FOR x = 1 TO NRO_COLUMNAS
+
+            contador = 0
+
+            FOR loop_4 = 0 TO 3
+
+                IF x + loop_4 <= NRO_COLUMNAS THEN
+                    IF board(x + loop_4, y).valor = 1 THEN contador = contador + 1
+                END IF
+
+            NEXT loop_4
+
+            IF contador >= 4 THEN
+                score = 1
+                gameover = -1
+                EXIT SUB
+            END IF
+
+        NEXT x
+    NEXT y
+
+    '------------------------------------------------------------------
+    '---                   CHECK VERTICALES
+    '------------------------------------------------------------------
+    FOR y = 1 TO NRO_FILAS
+        FOR x = 1 TO NRO_COLUMNAS
+
+            contador = 0
+
+            FOR loop_4 = 0 TO 3
+
+                IF y + loop_4 <= NRO_FILAS THEN
+                    IF board(x, y + loop_4).valor = 1 THEN contador = contador + 1
+                END IF
+
+            NEXT loop_4
+
+            IF contador >= 4 THEN
+                score = 1
+                gameover = -1
+                EXIT SUB
+            END IF
+
+        NEXT x
+    NEXT y
 
 END SUB
 
