@@ -229,11 +229,14 @@ DO
 LOOP UNTIL gameover OR salir
 
 '============================================================
+_SNDSTOP musica_ingame
+
+IF score = 1 THEN _SNDPLAY sonido_aplausoseagle
+
+'============================================================
 '--------      B U C L E   G A M E  O V E R          --------
 '--------                                            --------
 '============================================================
-_SNDSTOP musica_ingame
-
 DO
     _LIMIT FPS
     PCOPY _DISPLAY, 1
@@ -243,7 +246,7 @@ DO
     '------------- LLAMADAS A SUBS ---------------
     dibuja_board
     mostrar_marcadores
-    'show_gameover
+    show_gameover
 
     '------------- CONTADORES --------------------
     ciclos = ciclos + 1
@@ -373,16 +376,16 @@ SUB cambiar_turno (board() AS board, ficha AS ficha)
 
     IF turno THEN
         board(columna, INT(ficha.y / TILE_Y)).valor = 1
+        check_4raya
         turno = 0
     ELSE
         board(columna, INT(ficha.y / TILE_Y)).valor = 2
+        check_4raya
         turno = -1
     END IF
 
     _SNDPLAY sonido_chipscollide1
     _SNDPLAY sonido_chipscollide2
-
-    check_4raya
 
 END SUB
 
@@ -393,8 +396,18 @@ SUB check_4raya
     DIM x AS INTEGER
     DIM loop_4 AS INTEGER
     DIM contador AS INTEGER
+    DIM ficha_roja_verde AS INTEGER
 
     SHARED board() AS board
+
+    '------------------------------------------------------------------
+    '---           QUE FICHA CHECKEAR? (ROJA O VERDE)
+    '------------------------------------------------------------------
+    IF turno THEN
+        ficha_roja_verde = 1
+    ELSEIF NOT turno THEN
+        ficha_roja_verde = 2
+    END IF
 
     '------------------------------------------------------------------
     '---                   CHECK HORIZONTALES
@@ -407,13 +420,13 @@ SUB check_4raya
             FOR loop_4 = 0 TO 3
 
                 IF x + loop_4 <= NRO_COLUMNAS THEN
-                    IF board(x + loop_4, y).valor = 1 THEN contador = contador + 1
+                    IF board(x + loop_4, y).valor = ficha_roja_verde THEN contador = contador + 1
                 END IF
 
             NEXT loop_4
 
             IF contador >= 4 THEN
-                score = 1
+                score = ficha_roja_verde
                 gameover = -1
                 EXIT SUB
             END IF
@@ -432,19 +445,82 @@ SUB check_4raya
             FOR loop_4 = 0 TO 3
 
                 IF y + loop_4 <= NRO_FILAS THEN
-                    IF board(x, y + loop_4).valor = 1 THEN contador = contador + 1
+                    IF board(x, y + loop_4).valor = ficha_roja_verde THEN contador = contador + 1
                 END IF
 
             NEXT loop_4
 
             IF contador >= 4 THEN
-                score = 1
+                score = ficha_roja_verde
                 gameover = -1
                 EXIT SUB
             END IF
 
         NEXT x
     NEXT y
+
+    '------------------------------------------------------------------
+    '---              CHECK DIAGONALES (hacia derecha y abajo)
+    '------------------------------------------------------------------
+    FOR y = 1 TO NRO_FILAS
+        FOR x = 1 TO NRO_COLUMNAS
+
+            contador = 0
+
+            FOR loop_4 = 0 TO 3
+
+                IF y + loop_4 <= NRO_FILAS AND x + loop_4 <= NRO_COLUMNAS THEN
+                    IF board(x + loop_4, y + loop_4).valor = ficha_roja_verde THEN contador = contador + 1
+                END IF
+
+            NEXT loop_4
+
+            IF contador >= 4 THEN
+                score = ficha_roja_verde
+                gameover = -1
+                EXIT SUB
+            END IF
+
+        NEXT x
+    NEXT y
+
+    '------------------------------------------------------------------
+    '---           CHECK DIAGONALES (hacia izquierda y arriba)
+    '------------------------------------------------------------------
+    FOR y = 1 TO NRO_FILAS
+        FOR x = 1 TO NRO_COLUMNAS
+
+            contador = 0
+
+            FOR loop_4 = 0 TO -3 STEP -1
+
+                IF y + ABS(loop_4) <= NRO_FILAS AND x + loop_4 >= 1 THEN
+                    IF board(x + loop_4, y + ABS(loop_4)).valor = ficha_roja_verde THEN contador = contador + 1
+                END IF
+
+            NEXT loop_4
+
+            IF contador >= 4 THEN
+                score = ficha_roja_verde
+                gameover = -1
+                EXIT SUB
+            END IF
+
+        NEXT x
+    NEXT y
+
+END SUB
+
+'=======================================================================
+SUB show_gameover
+
+    LOCATE 5, 27
+
+    IF score = 1 THEN
+        PRINT " E N H O R A B U E N A !     4 EN RAYA "
+    ELSEIF score = 2 THEN
+        PRINT " P E R D I S T E !   IA HIZO 4 EN RAYA "
+    END IF
 
 END SUB
 
