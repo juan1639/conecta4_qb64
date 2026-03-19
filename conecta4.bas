@@ -37,10 +37,10 @@ CONST NRO_COLUMNAS = 7
 CONST WINDOW_X = NRO_COLUMNAS * TILE_X
 CONST WINDOW_Y = (NRO_FILAS * TILE_Y) + TILE_Y
 
-CONST VEL_CAER_FICHA = 2
-CONST PAUSA_IA_TIRAR = 250
+CONST VEL_CAER_FICHA = 10
+CONST PAUSA_IA_TIRAR = 200
 
-CONST FPS = 100
+CONST FPS = 60
 
 '===========================================================================
 '---                       Variables  O B J E T O S
@@ -324,9 +324,26 @@ SUB ini_tirar_ficha (raton AS raton)
     '-----------------------------------------------------------
     IF turno THEN
         columna = INT(raton.x / TILE_X) + 1
+
     ELSE
-        columna = INT(RND * 7) + 1
         pausa_ia = 0
+
+        '---------------------------------------------------
+        ' CHECKEAR SI IA TIENE 4RAYA Y GANA DIRECTO...
+        '---------------------------------------------------
+        check_si_ia_4raya
+
+        IF columna >= 1 AND columna <= 7 THEN
+            '-------- IA hace 4 en raya y gana directo ---------
+
+        ELSE
+            '---------------------------------------------------
+            ' TIRADA ALEATORIA (como ultimo recurso)
+            '---------------------------------------------------
+            columna = INT(RND * 7) + 1
+
+        END IF
+
     END IF
 
     '-------------- SI COLUMNA LLENA... RETURN ----------------
@@ -411,6 +428,7 @@ SUB check_4raya
 
     DIM y AS INTEGER
     DIM x AS INTEGER
+
     DIM loop_4 AS INTEGER
     DIM contador AS INTEGER
     DIM ficha_roja_verde AS INTEGER
@@ -529,6 +547,142 @@ SUB check_4raya
 END SUB
 
 '=======================================================================
+SUB check_si_ia_4raya
+
+    DIM y AS INTEGER
+    DIM x AS INTEGER
+
+    DIM a AS INTEGER
+    DIM b AS INTEGER
+
+    DIM loop_4 AS INTEGER
+    DIM contador AS INTEGER
+    DIM ficha_roja_verde AS INTEGER
+
+    SHARED board() AS board
+
+    '------------------------------------------------------------------
+    columna = -99
+    ficha_roja_verde = 2
+
+    FOR a = 1 TO NRO_COLUMNAS
+
+        FOR b = NRO_FILAS TO 1 STEP -1
+
+            IF board(a, b).valor = 0 THEN
+                board(a, b).valor = 2
+                EXIT FOR
+            END IF
+
+        NEXT b
+
+        '------------------------------------------------------------------
+        '---                   CHECK HORIZONTALES
+        '------------------------------------------------------------------
+        FOR y = 1 TO NRO_FILAS
+            FOR x = 1 TO NRO_COLUMNAS
+
+                contador = 0
+
+                FOR loop_4 = 0 TO 3
+
+                    IF x + loop_4 <= NRO_COLUMNAS THEN
+                        IF board(x + loop_4, y).valor = ficha_roja_verde THEN contador = contador + 1
+                    END IF
+
+                NEXT loop_4
+
+                IF contador >= 4 THEN
+                    columna = a
+                    board(a, b).valor = 0 ' Dejar la casilla como estaba (SIN ficha)
+                    EXIT SUB
+                END IF
+
+            NEXT x
+        NEXT y
+
+        '------------------------------------------------------------------
+        '---                   CHECK VERTICALES
+        '------------------------------------------------------------------
+        FOR y = 1 TO NRO_FILAS
+            FOR x = 1 TO NRO_COLUMNAS
+
+                contador = 0
+
+                FOR loop_4 = 0 TO 3
+
+                    IF y + loop_4 <= NRO_FILAS THEN
+                        IF board(x, y + loop_4).valor = ficha_roja_verde THEN contador = contador + 1
+                    END IF
+
+                NEXT loop_4
+
+                IF contador >= 4 THEN
+                    columna = a
+                    board(a, b).valor = 0 ' Dejar la casilla como estaba (SIN ficha)
+                    EXIT SUB
+                END IF
+
+            NEXT x
+        NEXT y
+
+        '------------------------------------------------------------------
+        '---              CHECK DIAGONALES (hacia derecha y abajo)
+        '------------------------------------------------------------------
+        FOR y = 1 TO NRO_FILAS
+            FOR x = 1 TO NRO_COLUMNAS
+
+                contador = 0
+
+                FOR loop_4 = 0 TO 3
+
+                    IF y + loop_4 <= NRO_FILAS AND x + loop_4 <= NRO_COLUMNAS THEN
+                        IF board(x + loop_4, y + loop_4).valor = ficha_roja_verde THEN contador = contador + 1
+                    END IF
+
+                NEXT loop_4
+
+                IF contador >= 4 THEN
+                    columna = a
+                    board(a, b).valor = 0 ' Dejar la casilla como estaba (SIN ficha)
+                    EXIT SUB
+                END IF
+
+            NEXT x
+        NEXT y
+
+        '------------------------------------------------------------------
+        '---           CHECK DIAGONALES (hacia izquierda y arriba)
+        '------------------------------------------------------------------
+        FOR y = 1 TO NRO_FILAS
+            FOR x = 1 TO NRO_COLUMNAS
+
+                contador = 0
+
+                FOR loop_4 = 0 TO -3 STEP -1
+
+                    IF y + ABS(loop_4) <= NRO_FILAS AND x + loop_4 >= 1 THEN
+                        IF board(x + loop_4, y + ABS(loop_4)).valor = ficha_roja_verde THEN contador = contador + 1
+                    END IF
+
+                NEXT loop_4
+
+                IF contador >= 4 THEN
+                    columna = a
+                    board(a, b).valor = 0 ' Dejar la casilla como estaba (SIN ficha)
+                    EXIT SUB
+                END IF
+
+            NEXT x
+        NEXT y
+
+        board(a, b).valor = 0 ' Dejar la casilla como estaba (SIN ficha)
+
+    NEXT a
+
+END SUB
+
+'=======================================================================
 SUB show_gameover
 
     LOCATE 5, 27
@@ -548,7 +702,7 @@ SUB mostrar_marcadores
     'LOCATE 6, 1
     'PRINT raton.x; " - "; raton.y
 
-    IF cadencia > 0 and not gameover THEN
+    IF cadencia > 0 AND NOT gameover THEN
         COLOR blanco
         LOCATE 4, 38
         PRINT " IA pensando... "
