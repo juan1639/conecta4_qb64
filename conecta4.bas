@@ -544,6 +544,30 @@ SUB check_4raya
         NEXT x
     NEXT y
 
+    check_empate
+
+END SUB
+
+'=======================================================================
+SUB check_empate
+
+    DIM y AS INTEGER
+    DIM x AS INTEGER
+
+    SHARED board() AS board
+
+    FOR y = 1 TO NRO_FILAS
+        FOR x = 1 TO NRO_COLUMNAS
+
+            IF board(x, y).valor = 0 THEN EXIT SUB
+
+        NEXT x
+    NEXT y
+
+    '-- SI LLEGA HASTA AQUI HAY  E M P A T E  (todas casillas llenas) --
+    score = 3 '  --- Empate ---
+    gameover = -1
+
 END SUB
 
 '=======================================================================
@@ -691,6 +715,8 @@ SUB show_gameover
         PRINT " E N H O R A B U E N A !     4 EN RAYA "
     ELSEIF score = 2 THEN
         PRINT " P E R D I S T E !   IA HIZO 4 EN RAYA "
+    ELSEIF score = 3 THEN
+        PRINT "   E    M    P    A    T    E    !   "
     END IF
 
 END SUB
