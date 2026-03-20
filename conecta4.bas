@@ -72,6 +72,7 @@ DIM SHARED raton AS raton
 
 DIM SHARED pre_juego AS _BIT
 DIM SHARED turno AS _BIT
+DIM SHARED contador_jugadas_ia AS INTEGER
 DIM SHARED gameover AS _BIT
 DIM restart AS _BIT
 DIM salir AS _BIT
@@ -148,6 +149,7 @@ sonido_errorbeep = _SNDOPEN("sound-of-error-beep.mp3")
 DO
     pre_juego = -1
     turno = INT(RND * 2) - 1 ' Turno inicial aleatorio
+    contador_jugadas_ia = 1
     gameover = 0
     restart = 0
     salir = 0
@@ -357,6 +359,7 @@ SUB ini_tirar_ficha (raton AS raton)
             ' TIRADA ALEATORIA (como ultimo recurso)
             '---------------------------------------------------
             columna = INT(RND * 7) + 1
+            IF contador_jugadas_ia = 1 THEN centrar_tirada_inicial board()
 
         END IF
 
@@ -432,10 +435,28 @@ SUB cambiar_turno (board() AS board, ficha AS ficha)
         board(columna, INT(ficha.y / TILE_Y)).valor = 2
         check_4raya
         turno = -1
+        contador_jugadas_ia = contador_jugadas_ia + 1
+
     END IF
 
     _SNDPLAY sonido_chipscollide1
     _SNDPLAY sonido_chipscollide2
+
+END SUB
+
+'=======================================================================
+SUB centrar_tirada_inicial (board() AS board)
+
+    IF board(4, 6).valor = 0 THEN
+        columna = 4
+
+    ELSEIF board(3, 6).valor = 0 THEN
+        columna = 3
+
+    ELSEIF board(5, 6).valor = 0 THEN
+        columna = 5
+
+    END IF
 
 END SUB
 
@@ -748,7 +769,7 @@ SUB mostrar_marcadores
     'LOCATE 6, 1
     'PRINT raton.x; " - "; raton.y
 
-    IF cadencia > 0 AND NOT gameover THEN
+    IF cadencia > 0 AND NOT gameover AND NOT pre_juego THEN
         COLOR blanco
         LOCATE 4, 38
         PRINT " IA pensando... "
