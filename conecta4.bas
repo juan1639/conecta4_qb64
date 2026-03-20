@@ -73,6 +73,7 @@ DIM SHARED raton AS raton
 DIM SHARED pre_juego AS _BIT
 DIM SHARED turno AS _BIT
 DIM SHARED gameover AS _BIT
+DIM restart AS _BIT
 DIM salir AS _BIT
 
 DIM SHARED score AS INTEGER ' 0= ganador-jugador, 1= ganador-IA, 2= empate
@@ -96,6 +97,7 @@ DIM sonido_chipscollide3 AS LONG
 DIM sonido_diethrow1 AS LONG
 DIM sonido_diethrow2 AS LONG
 DIM sonido_aplausoseagle AS LONG
+DIM sonido_errorbeep AS LONG
 
 '===============================================================
 '--------                                               --------
@@ -118,24 +120,6 @@ LOCATE 18, 38
 PRINT " Cargando... "
 
 '===============================================================
-'--------               UPDATES GENERALES               --------
-'--------                                               --------
-'---------------------------------------------------------------
-pre_juego = -1
-turno = -1
-game_over = 0
-salir = 0
-
-score = 0 '          0= enJuego, 1= ganador-jugador, 2= ganador-IA, 3= empate
-ficha_cayendo = 0
-pausa_ia = 0
-
-cadencia = 0
-ciclos = 0
-
-instanciar_board board()
-
-'===============================================================
 '--------               UPDATES GRAFICOS                 --------
 '--------                                               --------
 '---------------------------------------------------------------
@@ -154,114 +138,146 @@ sonido_chipscollide2 = _SNDOPEN("chipsCollide2.ogg")
 sonido_chipscollide3 = _SNDOPEN("chipsCollide3.ogg")
 sonido_diethrow1 = _SNDOPEN("dieThrow1.ogg")
 sonido_diethrow2 = _SNDOPEN("dieThrow2.ogg")
+sonido_errorbeep = _SNDOPEN("sound-of-error-beep.mp3")
 
-'============================================================
-'--------                                            --------
-'--------        B U C L E   P R E J U E G O         --------
-'--------                                            --------
-'============================================================
-CLS
-LINE (0, 0)-(WINDOW_X, WINDOW_Y), negro_vacio, BF
-
+'===============================================================
+'--------                                               --------
+'--------               UPDATES GENERALES               --------
+'--------                                               --------
+'---------------------------------------------------------------
 DO
-    _LIMIT FPS
-    PCOPY _DISPLAY, 1
+    pre_juego = -1
+    turno = INT(RND * 2) - 1 ' Turno inicial aleatorio
+    gameover = 0
+    restart = 0
+    salir = 0
 
-    '------------- LLAMADAS A SUBS ---------------
-    dibuja_board
-    mostrar_marcadores
+    score = 0 '          0= enJuego, 1= ganador-jugador, 2= ganador-IA, 3= empate
+    ficha_cayendo = 0
+    pausa_ia = 0
 
-    '---------------------------------------------
-    IF _KEYDOWN(27) THEN SYSTEM
+    cadencia = 0
+    ciclos = 0
 
-    COLOR amarillo
-    LOCATE 3, 30
-    PRINT " C O N E C T A   C U A T R O "
-
-    COLOR blanco
-    LOCATE 5, 31
-    PRINT " Pulse ENTER para comenzar "
-
-    _DISPLAY
-    PCOPY 1, _DISPLAY
-
-LOOP UNTIL _KEYDOWN(13) OR _KEYDOWN(32)
-
-'============================================================
-pre_juego = 0
-soniquete 250, 750
-
-_SNDPLAY musica_ingame
-
-'============================================================
-'--------                                            --------
-'--------      B U C L E   P R I N C I P A L         --------
-'--------                                            --------
-'============================================================
-DO
-    _LIMIT FPS
-    PCOPY _DISPLAY, 1
-
-    '------------- LLAMADAS A SUBS ---------------
-    tirar_ficha
-    dibuja_board
-    mostrar_marcadores
-
-    '----- TECLAS ESC, M  Y  CLICK-RATON (TIRAR FICHA) -----
-    IF _KEYDOWN(27) THEN salir = -1
-    IF _KEYDOWN(77) OR _KEYDOWN(109) THEN _SNDSTOP musica_ingame
-
-    WHILE _MOUSEINPUT
-        raton.x = _MOUSEX
-        raton.y = _MOUSEY
-    WEND
-
-    IF (_MOUSEBUTTON(1) OR _MOUSEBUTTON(2)) AND NOT ficha_cayendo THEN
-        IF turno THEN ini_tirar_ficha raton
+    IF NOT turno THEN
+        cadencia = PAUSA_IA_TIRAR
+        pausa_ia = -1
     END IF
 
-    '------------- CONTADORES --------------------
-    ciclos = ciclos + 1
+    resetear_board board()
 
-    IF ciclos >= 32000 THEN ciclos = 0
-    IF cadencia > 0 THEN cadencia = cadencia - 1
+    '============================================================
+    '--------                                            --------
+    '--------        B U C L E   P R E J U E G O         --------
+    '--------                                            --------
+    '============================================================
+    CLS
+    LINE (0, 0)-(WINDOW_X, WINDOW_Y), negro_vacio, BF
 
-    '--------- TIRADA IA (SI PROCEDE) ------------
-    IF pausa_ia AND cadencia = 0 THEN ini_tirar_ficha raton
+    DO
+        _LIMIT FPS
+        PCOPY _DISPLAY, 1
 
-    _DISPLAY
-    PCOPY 1, _DISPLAY
+        '------------- LLAMADAS A SUBS ---------------
+        dibuja_board
+        mostrar_marcadores
 
-LOOP UNTIL gameover OR salir
+        '---------------------------------------------
+        IF _KEYDOWN(27) THEN SYSTEM
 
-'============================================================
-_SNDSTOP musica_ingame
+        COLOR amarillo
+        LOCATE 3, 30
+        PRINT " C O N E C T A   C U A T R O "
 
-IF score = 1 THEN _SNDPLAY sonido_aplausoseagle
+        COLOR blanco
+        LOCATE 5, 31
+        PRINT " Pulse ENTER para comenzar "
 
-'============================================================
-'--------      B U C L E   G A M E  O V E R          --------
-'--------                                            --------
-'============================================================
-DO
-    _LIMIT FPS
-    PCOPY _DISPLAY, 1
+        _DISPLAY
+        PCOPY 1, _DISPLAY
 
-    IF _KEYDOWN(27) THEN salir = -1 'ESC. Salir
+    LOOP UNTIL _KEYDOWN(13) OR _KEYDOWN(32)
 
-    '------------- LLAMADAS A SUBS ---------------
-    dibuja_board
-    mostrar_marcadores
-    show_gameover
+    '============================================================
+    pre_juego = 0
+    soniquete 250, 750
 
-    '------------- CONTADORES --------------------
-    ciclos = ciclos + 1
+    _SNDPLAY musica_ingame
 
-    IF ciclos >= 32000 THEN ciclos = 0
-    IF cadencia > 0 THEN cadencia = cadencia - 1
+    '============================================================
+    '--------                                            --------
+    '--------      B U C L E   P R I N C I P A L         --------
+    '--------                                            --------
+    '============================================================
+    DO
+        _LIMIT FPS
+        PCOPY _DISPLAY, 1
 
-    _DISPLAY
-    PCOPY 1, _DISPLAY
+        '------------- LLAMADAS A SUBS ---------------
+        tirar_ficha
+        dibuja_board
+        mostrar_marcadores
+
+        '----- TECLAS ESC, M  Y  CLICK-RATON (TIRAR FICHA) -----
+        IF _KEYDOWN(27) THEN salir = -1
+        IF _KEYDOWN(77) OR _KEYDOWN(109) THEN _SNDSTOP musica_ingame
+
+        WHILE _MOUSEINPUT
+            raton.x = _MOUSEX
+            raton.y = _MOUSEY
+        WEND
+
+        IF (_MOUSEBUTTON(1) OR _MOUSEBUTTON(2)) AND NOT ficha_cayendo THEN
+            IF turno THEN ini_tirar_ficha raton
+        END IF
+
+        '------------- CONTADORES --------------------
+        ciclos = ciclos + 1
+
+        IF ciclos >= 32000 THEN ciclos = 0
+        IF cadencia > 0 THEN cadencia = cadencia - 1
+
+        '--------- TIRADA IA (SI PROCEDE) ------------
+        IF pausa_ia AND cadencia = 0 THEN ini_tirar_ficha raton
+
+        _DISPLAY
+        PCOPY 1, _DISPLAY
+
+    LOOP UNTIL gameover OR salir
+
+    '============================================================
+    _SNDSTOP musica_ingame
+
+    IF score = 1 THEN _SNDPLAY sonido_aplausoseagle
+    IF score >= 2 THEN _SNDPLAY sonido_errorbeep
+
+    '============================================================
+    '--------                                            --------
+    '--------      B U C L E   G A M E  O V E R          --------
+    '--------                                            --------
+    '============================================================
+    DO
+        _LIMIT FPS
+        PCOPY _DISPLAY, 1
+
+        IF _KEYDOWN(27) THEN salir = -1 'ESC. Salir
+        IF _KEYDOWN(13) THEN restart = -1 ' Jugar otra vez
+
+        '------------- LLAMADAS A SUBS ---------------
+        dibuja_board
+        mostrar_marcadores
+        show_gameover
+
+        '------------- CONTADORES --------------------
+        ciclos = ciclos + 1
+
+        IF ciclos >= 32000 THEN ciclos = 0
+        IF cadencia > 0 THEN cadencia = cadencia - 1
+
+        _DISPLAY
+        PCOPY 1, _DISPLAY
+
+    LOOP UNTIL salir OR restart
 
 LOOP UNTIL salir
 
@@ -709,7 +725,7 @@ END SUB
 '=======================================================================
 SUB show_gameover
 
-    LOCATE 5, 27
+    LOCATE 3, 27
 
     IF score = 1 THEN
         PRINT " E N H O R A B U E N A !     4 EN RAYA "
@@ -718,6 +734,10 @@ SUB show_gameover
     ELSEIF score = 3 THEN
         PRINT "   E    M    P    A    T    E    !   "
     END IF
+
+
+    LOCATE 5, 20
+    PRINT " Pulse Enter para jugar otra vez o Esc para salir... "
 
 END SUB
 
@@ -772,7 +792,7 @@ SUB soniquete (uno AS INTEGER, dos AS INTEGER)
 END SUB
 
 '===================================================================
-SUB instanciar_board (board() AS board)
+SUB resetear_board (board() AS board)
 
     DIM y AS INTEGER
     DIM x AS INTEGER
