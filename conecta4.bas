@@ -349,24 +349,35 @@ SUB ini_tirar_ficha (raton AS raton)
         '---------------------------------------------------
         ' CHECKEAR SI IA TIENE 4RAYA Y GANA DIRECTO...
         '---------------------------------------------------
-        check_si_ia_4raya
+        check_si_ia_4raya 2 '    IA checkea SI puede hacer 4 en raya directo
 
-        IF columna >= 1 AND columna <= 7 THEN
+        IF columna >= 1 AND columna <= NRO_COLUMNAS THEN
             '-------- IA hace 4 en raya y gana directo ---------
 
         ELSE
-            '---------------------------------------------------
-            ' TIRADA ALEATORIA (como ultimo recurso)
-            '---------------------------------------------------
-            columna = INT(RND * 7) + 1
-            IF contador_jugadas_ia = 1 THEN centrar_tirada_inicial board()
+            check_si_ia_4raya 1 '    IA checkea SI tiene que defender
 
+            IF columna >= 1 AND columna <= NRO_COLUMNAS THEN
+                '--------------- IA va a defenderse ----------------
+
+            ELSE
+                '---------------------------------------------------
+                ' TIRADA ALEATORIA (como ultimo recurso)
+                '---------------------------------------------------
+                columna = INT(RND * NRO_COLUMNAS) + 1
+                IF contador_jugadas_ia = 1 THEN centrar_tirada_inicial board()
+
+            END IF
         END IF
 
     END IF
 
     '-------------- SI COLUMNA LLENA... RETURN ----------------
-    IF board(columna, 1).valor <> 0 THEN EXIT SUB
+    IF board(columna, 1).valor <> 0 THEN
+
+        IF NOT turno THEN pausa_ia = -1
+        EXIT SUB
+    END IF
 
     '-------------- SI SE PUEDE, INICIA TIRADA ----------------
     ficha_cayendo = -1
@@ -608,7 +619,7 @@ SUB check_empate
 END SUB
 
 '=======================================================================
-SUB check_si_ia_4raya
+SUB check_si_ia_4raya (que_ficha_checkear AS INTEGER)
 
     DIM y AS INTEGER
     DIM x AS INTEGER
@@ -624,14 +635,14 @@ SUB check_si_ia_4raya
 
     '------------------------------------------------------------------
     columna = -99
-    ficha_roja_verde = 2
+    ficha_roja_verde = que_ficha_checkear
 
     FOR a = 1 TO NRO_COLUMNAS
 
         FOR b = NRO_FILAS TO 1 STEP -1
 
             IF board(a, b).valor = 0 THEN
-                board(a, b).valor = 2
+                board(a, b).valor = que_ficha_checkear
                 EXIT FOR
             END IF
 
