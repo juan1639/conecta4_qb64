@@ -14,6 +14,16 @@
 
 <img src="img/img-conecta4.png"/>
 
+---
+
+## Autor
+
+---
+
+Desarrollado por: [juan1639](https://github.com/juan1639)
+
+Repositorio: [agent_reply_emails](https://github.com/juan1639/conecta4_qb64)
+
 
 
 
